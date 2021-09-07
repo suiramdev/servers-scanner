@@ -17,21 +17,18 @@ def thread(num):
     for i in range(round(max/(num+1)+1), round(max/num)):
         ip = intToIP(i)
         try:
-            nmScan = nm.scan(ip)
-            server = MinecraftServer.lookup(ip)
-            if (server.ping()):
-                status = server.status()
-                print(ip)
-                print("     Description :", status.description)
-                print("     Players online :", status.players.online)
+            for port in nm.scan(ip, "1-7777")["scan"][ip]["tcp"].keys():
+                try:
+                    server = MinecraftServer.lookup(ip + ":" + port)
+                    print("Server found:", server.host, ":", port)
+                except:
+                    pass
         except:
             pass
+    print("End thread", threading.current_thread().name)
 
 if __name__ == '__main__':
-    #startTime = time.time()
-    #for i in range(1, 10):
-    #    threading.Thread(name=i, target=thread, args=[i]).start()
-    #print("Executed in", (time.time() - startTime), "seconds")
-    nm = nmap.PortScanner()
-    nmScan = nm.scan("194.163.182.242")
-    print(nmScan)
+    startTime = time.time()
+    for i in range(1, 10):
+        threading.Thread(name=i, target=thread, args=[i]).start()
+    print("Executed in", (time.time() - startTime), "seconds")
