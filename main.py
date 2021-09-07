@@ -32,21 +32,21 @@ def thread(num):
     while curr < round(max/num):
         curr += 1
         blacklistedPool = intIsBlacklisted(curr)
-        if blacklistedPool is not None:
+        if blacklistedPool is not None: # Is ip in blacklisted pool?
             curr += blacklistedPool[1] - blacklistedPool[0] - 1 # Minus one because we are going to increase at the begin of the loop
             continue
         ip = intToIP(curr)
         print("Scanning", ip)
         try:
             for port in nm.scan(ip, "1-7777")["scan"][ip]["tcp"].keys():
-                try:
+                try: # Is a minecraft server running on that port?
                     server = MinecraftServer.lookup(ip + ":" + port)
                     print("Server found:", server.host, ":", port)
                 except:
                     pass
         except:
-            time.sleep(2)
             pass
+        time.sleep(2)
     print("End thread", threading.current_thread().name)
 
 if __name__ == '__main__':
