@@ -1,5 +1,6 @@
 import threading
 import time
+import IP2Location, os
 import nmap
 from mcstatus import MinecraftServer
 
@@ -17,12 +18,20 @@ blacklistedPools = [
     [2130706433, 2130706433] # 127.0.0.1
 ]
 
+blacklistedCountries = [
+    "US"
+]
+
+IPDatabase = IP2Location.IP2Location(os.path.join("data", "IP-COUNTRY-SAMPLE.bin"))
+
 def intIsBlacklisted(num):
     for pool in blacklistedPools:
         if pool[0] <= num <= pool[1]:
-            return pool
+            return True, pool
         continue
-    return None
+    if IPDatabase.get_country_short(intToIP(num)) in blacklistedCountries:
+        return True, None
+    return False, None
 
 def thread(num):
     startTime = time.time()
@@ -32,9 +41,10 @@ def thread(num):
     curr = round(max/(num+1)) # Current IP address in integer depeding on thread number
     while curr < round(max/num):
         curr += 1 # Not at the end of the loop beacuse of the next condition passing the while loop
-        blacklistedPool = intIsBlacklisted(curr)
-        if blacklistedPool is not None: # Is ip in blacklisted pool?
-            curr += blacklistedPool[1] - blacklistedPool[0] - 1 # Minus one because we are going to increase at the begin of the loop
+        isBlacklisted, blacklistedPool = intIsBlacklisted(curr)
+        if isBlacklisted: # Is ip in blacklisted pool?
+            if blacklistedPool is not None:
+                curr += blacklistedPool[1] - blacklistedPool[0] - 1 # Minus one because we are going to increase at the begin of the loop
             continue
         ip = intToIP(curr)
         try:
@@ -45,11 +55,10 @@ def thread(num):
                 except:
                     pass
         except:
-            print("nope")
             pass
         time.sleep(2) # Wait 2 seconds before scanning the next IP
     print("End thread", threading.current_thread().name, (time.time() - startTime)) # Display execution time
 
 if __name__ == '__main__':
-    for i in range(0, 10): # Start X threads
+    for i in range(1, 11): # Start X threads
         threading.Thread(name=i, target=thread, args=[i]).start()
